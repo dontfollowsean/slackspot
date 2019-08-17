@@ -1,0 +1,12 @@
+version: '3.6'
+
+services:
+  slackspot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      - SPOTIFY_ID=ea5e4e553fd94ea8b55a24f8e36dec42
+      - SPOTIFY_SECRET=a12724ef112b4f9fa049c0d1ac4a7841
