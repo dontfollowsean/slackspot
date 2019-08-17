@@ -19,12 +19,13 @@ var (
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		url := auth.AuthURL(state)
-		fmt.Fprintf(w, "Spotify-Slack Integration\n Please log in to Spotify by visiting the following page in your browser: %s", url)
+		_, _ = fmt.Fprintf(w, "Spotify-Slack Integration\n Please log in to Spotify by visiting the following page in your browser: %s", url)
 	})
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
 	//http.HandleFunc("/lastplayed", lastPlatedHandler)
 
+	// auth
 	go func() {
 		url := auth.AuthURL(state)
 		fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
@@ -49,29 +50,13 @@ func main() {
 }
 
 func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
-	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
-	if err != nil {
-		log.Printf("err %s", err)
+	if client == nil {
+		fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
+		return
 	}
-	if !currentlyPlaying.Playing {
-		fmt.Fprint(w, "No music is playing.")
-	}
-	fmt.Fprintf(w, currentlyPlaying.Item.Name)
-}
 
-func initAuth() {
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-
-	// wait for auth to complete
-	client = <-ch
-
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("You are logged in as:", user.ID)
+	nowPlaying := PrintNowPlaying(client)
+	_, _ = fmt.Fprint(w, nowPlaying)
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
