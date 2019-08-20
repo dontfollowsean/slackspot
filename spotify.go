@@ -17,7 +17,7 @@ func PrintNowPlaying(client *spotify.Client) string {
 		return errMsg
 	}
 
-	if !currentlyPlaying.Playing {
+	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil{
 		return "No music is playing."
 	}
 

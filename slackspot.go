@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/nlopes/slack"
 	"github.com/zmb3/spotify"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -17,13 +21,19 @@ var (
 )
 
 func main() {
+	// todo get from env
+	//slackApi := slack.New("Vs5ajYrxthVZ6sYixzVu6yo4")
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		url := auth.AuthURL(state)
 		_, _ = fmt.Fprintf(w, "Spotify-Slack Integration\n Please log in to Spotify by visiting the following page in your browser: %s", url)
 	})
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
-	//http.HandleFunc("/lastplayed", lastPlatedHandler)
+	http.HandleFunc("/slack/nowplaying", slackNowPlayingHandler)
+	//http.HandleFunc("/lastplayed", lastPlayedHandler)
+	//http.HandleFunc("/slack/lastplayed", lastPlayedHandler)
+
 
 	// auth
 	go func() {
@@ -49,9 +59,62 @@ func main() {
 
 }
 
+func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
+	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9"
+	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	r.Body = ioutil.NopCloser(io.TeeReader(r.Body, &verifier))
+	s, err := slack.SlashCommandParse(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = verifier.Ensure(); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	song, err := client.PlayerCurrentlyPlaying()
+	var titleLink string
+	if song != nil && song.Item != nil{
+		for k,v := range song.Item.ExternalURLs {
+			log.Printf("%s: %s", k, v)
+		}
+		titleLink = song.Item.ExternalURLs["spotify"]
+	}
+
+	switch s.Command {
+	case "/nowplaying":
+		params := &slack.Msg{
+			Text: "🎵 Now playing...",
+			Attachments: []slack.Attachment{
+				{
+					Title: PrintNowPlaying(client),
+					TitleLink: titleLink,
+				},
+			},
+		}
+		b, err := json.Marshal(params)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	if client == nil {
-		fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
+		_, _ = fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
 		return
 	}
 
