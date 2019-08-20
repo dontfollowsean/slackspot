@@ -29,18 +29,19 @@ func (c *SpotifyClient) Login() {
 	fmt.Println("logged in as:", user.ID)
 }
 
-func (c *SpotifyClient) PrintNowPlaying() string {
+//todo should  return song object and err
+func (c *SpotifyClient) PrintNowPlaying() (SongTitle string, SongUrl string) {
 	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
 	var artists bytes.Buffer
 
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting current song: %s", err.Error())
 		log.Print(errMsg)
-		return errMsg
+		return errMsg, ""
 	}
 
 	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil{
-		return "No music is playing."
+		return "No music is playing.", ""
 	}
 
 	for i, artist := range currentlyPlaying.Item.Artists {
@@ -49,5 +50,5 @@ func (c *SpotifyClient) PrintNowPlaying() string {
 		}
 		artists.WriteString(artist.Name)
 	}
-	return fmt.Sprintf("%s by %s", currentlyPlaying.Item.Name, artists.String())
+	return fmt.Sprintf("%s by %s", currentlyPlaying.Item.Name, artists.String()), currentlyPlaying.Item.ExternalURLs["spotify"]
 }

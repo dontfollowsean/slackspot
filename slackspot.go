@@ -64,23 +64,15 @@ func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	song, err := spotifyClient.Client.PlayerCurrentlyPlaying()
-	var titleLink string
-	if song != nil && song.Item != nil{
-		for k,v := range song.Item.ExternalURLs {
-			log.Printf("%s: %s", k, v)
-		}
-		titleLink = song.Item.ExternalURLs["spotify"]
-	}
-
 	switch s.Command {
 	case "/nowplaying":
+		songTitle, songLink :=spotifyClient.PrintNowPlaying()
 		params := &slack.Msg{
 			Text: "🎵 Now playing...",
 			Attachments: []slack.Attachment{
 				{
-					Title: spotifyClient.PrintNowPlaying(),
-					TitleLink: titleLink,
+					Title: songTitle,
+					TitleLink: songLink,
 				},
 			},
 		}
@@ -104,7 +96,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nowPlaying := spotifyClient.PrintNowPlaying()
+	nowPlaying, _ := spotifyClient.PrintNowPlaying()
 	_, _ = fmt.Fprint(w, nowPlaying)
 }
 
