@@ -7,8 +7,30 @@ import (
 	"log"
 )
 
-func PrintNowPlaying(client *spotify.Client) string {
-	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
+type SpotifyClient struct {
+	Client        *spotify.Client
+	Authenticator spotify.Authenticator
+	State         string
+	Channel       chan *spotify.Client
+}
+
+func (c *SpotifyClient) Login() {
+	url := c.Authenticator.AuthURL(c.State)
+	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+
+	// wait for auth to complete
+	c.Client = <-c.Channel
+
+	// use the client to make calls that require authorization
+	user, err := c.Client.CurrentUser()
+	if err != nil {
+		log.Print(err)
+	}
+	fmt.Println("logged in as:", user.ID)
+}
+
+func (c *SpotifyClient) PrintNowPlaying() string {
+	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
 	var artists bytes.Buffer
 
 	if err != nil {
