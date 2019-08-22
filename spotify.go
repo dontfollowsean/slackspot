@@ -14,6 +14,12 @@ type SpotifyClient struct {
 	Channel       chan *spotify.Client
 }
 
+type Song struct {
+	title  string
+	artist string
+	url    string
+}
+
 func (c *SpotifyClient) Login() {
 	url := c.Authenticator.AuthURL(c.State)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
@@ -29,19 +35,17 @@ func (c *SpotifyClient) Login() {
 	fmt.Println("logged in as:", user.ID)
 }
 
-//todo should  return song object and err
-func (c *SpotifyClient) PrintNowPlaying() (SongTitle string, SongUrl string) {
+func (c *SpotifyClient) PrintNowPlaying() (*Song, error) {
 	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
 	var artists bytes.Buffer
 
 	if err != nil {
-		errMsg := fmt.Sprintf("Error getting current song: %s", err.Error())
-		log.Print(errMsg)
-		return errMsg, ""
+		log.Print(err)
+		return nil, err
 	}
 
-	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil{
-		return "No music is playing.", ""
+	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil {
+		return nil, nil
 	}
 
 	for i, artist := range currentlyPlaying.Item.Artists {
@@ -50,5 +54,10 @@ func (c *SpotifyClient) PrintNowPlaying() (SongTitle string, SongUrl string) {
 		}
 		artists.WriteString(artist.Name)
 	}
-	return fmt.Sprintf("%s by %s", currentlyPlaying.Item.Name, artists.String()), currentlyPlaying.Item.ExternalURLs["spotify"]
+	song := &Song{
+		currentlyPlaying.Item.Name,
+		artists.String(),
+		currentlyPlaying.Item.ExternalURLs["spotify"],
+	}
+	return song, nil
 }

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/zmb3/spotify"
- 	"io"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-const redirectURI = "http://localhost:8080/callback"// auth callback
+const redirectURI = "http://localhost:8080/callback" // auth callback
 var spotifyClient *SpotifyClient
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 }
 
 func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
-	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9"// todo regenerate me and get from env
+	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9" // todo regenerate me and get from env
 	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -66,13 +66,17 @@ func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch s.Command {
 	case "/nowplaying":
-		songTitle, songLink :=spotifyClient.PrintNowPlaying()
+		song, err := spotifyClient.PrintNowPlaying()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		params := &slack.Msg{
 			Text: "🎵 Now playing...",
 			Attachments: []slack.Attachment{
 				{
-					Title: songTitle,
-					TitleLink: songLink,
+					Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
+					TitleLink: song.url,
 				},
 			},
 		}
