@@ -31,9 +31,7 @@ func main() {
 	})
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
-	http.HandleFunc("/slack/nowplaying", slackNowPlayingHandler)
-	//http.HandleFunc("/lastplayed", lastPlayedHandler)
-	//http.HandleFunc("/slack/lastplayed", lastPlayedHandler)
+	http.HandleFunc("/slack", slackHandler)
 
 	go spotifyClient.Login()
 
@@ -44,10 +42,11 @@ func main() {
 
 }
 
-func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
+func slackHandler(w http.ResponseWriter, r *http.Request) {
 	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9" // todo regenerate me and get from env
 	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
 	if err != nil {
+		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -55,33 +54,65 @@ func slackNowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = ioutil.NopCloser(io.TeeReader(r.Body, &verifier))
 	s, err := slack.SlashCommandParse(r)
 	if err != nil {
+		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err = verifier.Ensure(); err != nil {
+		log.Print(err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	switch s.Command {
 	case "/nowplaying":
-		song, err := spotifyClient.PrintNowPlaying()
+		song, err := spotifyClient.NowPlaying()
 		if err != nil {
+			log.Print(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		params := &slack.Msg{
-			Text: "🎵 Now playing...",
-			Attachments: []slack.Attachment{
-				{
-					Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-					TitleLink: song.url,
-				},
+		attachments := []slack.Attachment{
+			{
+				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
+				TitleLink: song.url,
 			},
 		}
-		b, err := json.Marshal(params)
+		slackMsg := &slack.Msg{
+			Text:        "🎵 Now playing...",
+			Attachments: attachments,
+		}
+		b, err := json.Marshal(slackMsg)
 		if err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(b)
+	case "/lastplayed":
+		songs, err := spotifyClient.RecentlyPlayed()
+		if err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		attachments := make([]slack.Attachment, 0);
+		for _, song := range songs {
+			attachment := slack.Attachment{
+				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
+				TitleLink: song.url,
+			}
+			attachments = append(attachments, attachment)
+		}
+		slackMsg := &slack.Msg{
+			Text:        "🎵 Recently Played Songs",
+			Attachments: attachments,
+		}
+		b, err := json.Marshal(slackMsg)
+		if err != nil {
+			log.Print(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -100,7 +131,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nowPlaying, _ := spotifyClient.PrintNowPlaying()
+	nowPlaying, _ := spotifyClient.NowPlaying()
 	_, _ = fmt.Fprint(w, nowPlaying)
 }
 

@@ -35,12 +35,27 @@ func (c *SpotifyClient) Login() {
 	fmt.Println("logged in as:", user.ID)
 }
 
-func (c *SpotifyClient) PrintNowPlaying() (*Song, error) {
+func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
+	recentlyPlayed, err := c.Client.PlayerRecentlyPlayed();
+	if err != nil {
+		return nil, err
+	}
+	songs := make([]*Song, 3) // todo config
+	for i, song := range recentlyPlayed[:3] {
+		s := &Song{
+			title:  song.Track.Name,
+			artist: getArtists(song.Track),
+			url:    song.Track.ExternalURLs["spotify"],
+		}
+		songs[i] = s
+	}
+	return songs, nil
+}
+
+func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
-	var artists bytes.Buffer
 
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 
@@ -48,16 +63,22 @@ func (c *SpotifyClient) PrintNowPlaying() (*Song, error) {
 		return nil, nil
 	}
 
-	for i, artist := range currentlyPlaying.Item.Artists {
+	song := &Song{
+		currentlyPlaying.Item.Name,
+		getArtists(currentlyPlaying.Item.SimpleTrack),
+		currentlyPlaying.Item.ExternalURLs["spotify"],
+	}
+	return song, nil
+}
+
+func getArtists(song spotify.SimpleTrack) string {
+	var artists bytes.Buffer
+
+	for i, artist := range song.Artists {
 		if i > 0 {
 			artists.WriteString(", ")
 		}
 		artists.WriteString(artist.Name)
 	}
-	song := &Song{
-		currentlyPlaying.Item.Name,
-		artists.String(),
-		currentlyPlaying.Item.ExternalURLs["spotify"],
-	}
-	return song, nil
+	return artists.String()
 }
