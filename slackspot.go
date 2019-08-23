@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/zmb3/spotify"
@@ -67,52 +66,16 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch s.Command {
 	case "/nowplaying":
-		song, err := spotifyClient.NowPlaying()
+		b, err := NowPlayingMessage()
 		if err != nil {
-			log.Print(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		attachments := []slack.Attachment{
-			{
-				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-				TitleLink: song.url,
-			},
-		}
-		slackMsg := &slack.Msg{
-			Text:        "🎵 Now playing...",
-			Attachments: attachments,
-		}
-		b, err := json.Marshal(slackMsg)
-		if err != nil {
-			log.Print(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(b)
 	case "/lastplayed":
-		songs, err := spotifyClient.RecentlyPlayed()
+		b, err := RecentlyPlayedMessage()
 		if err != nil {
-			log.Print(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		attachments := make([]slack.Attachment, 0);
-		for _, song := range songs {
-			attachment := slack.Attachment{
-				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-				TitleLink: song.url,
-			}
-			attachments = append(attachments, attachment)
-		}
-		slackMsg := &slack.Msg{
-			Text:        "🎵 Recently Played Songs",
-			Attachments: attachments,
-		}
-		b, err := json.Marshal(slackMsg)
-		if err != nil {
-			log.Print(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
