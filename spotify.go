@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+const songHistoryLength = 3 // todo config
+
 type SpotifyClient struct {
 	Client        *spotify.Client
 	Authenticator spotify.Authenticator
@@ -23,7 +25,7 @@ type Song struct {
 func (c *SpotifyClient) Login() {
 	url := c.Authenticator.AuthURL(c.State)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-
+	SendLoginMessage(url)
 	// wait for auth to complete
 	c.Client = <-c.Channel
 
@@ -40,8 +42,8 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 	if err != nil {
 		return nil, err
 	}
-	songs := make([]*Song, 3) // todo config
-	for i, song := range recentlyPlayed[:3] {
+	songs := make([]*Song, songHistoryLength)
+	for i, song := range recentlyPlayed[:songHistoryLength] {
 		s := &Song{
 			title:  song.Track.Name,
 			artist: getArtists(song.Track),
@@ -73,7 +75,6 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 
 func getArtists(song spotify.SimpleTrack) string {
 	var artists bytes.Buffer
-
 	for i, artist := range song.Artists {
 		if i > 0 {
 			artists.WriteString(", ")

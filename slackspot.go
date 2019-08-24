@@ -10,13 +10,15 @@ import (
 	"net/http"
 )
 
-const redirectURI = "http://localhost:8080/callback" // auth callback
+const (
+	redirectURI = "http://localhost:8080/callback" //todo  auth callback move to env
+	contentType = "Content-Type"
+	jsonType    = "application/json"
+)
+
 var spotifyClient *SpotifyClient
 
 func main() {
-	// todo get from env
-	//slackApi := slack.New("Vs5ajYrxthVZ6sYixzVu6yo4")// todo regenerate me
-
 	spotifyClient = &SpotifyClient{
 		Client:        nil,
 		Authenticator: spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadRecentlyPlayed),
@@ -43,6 +45,7 @@ func main() {
 
 func slackHandler(w http.ResponseWriter, r *http.Request) {
 	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9" // todo regenerate me and get from env
+	//signingSecret := os.Getenv("SlackSigningSecret")
 	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
 	if err != nil {
 		log.Print(err)
@@ -68,22 +71,23 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 	case "/nowplaying":
 		b, err := NowPlayingMessage()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			w.Header().Set(contentType, jsonType)
+			b, _ = ErrorMessage("Cannot get currently playing song.")
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentType, jsonType)
 		_, _ = w.Write(b)
 	case "/lastplayed":
 		b, err := RecentlyPlayedMessage()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			w.Header().Set(contentType, jsonType)
+			b, _ = ErrorMessage("Cannot get recently played songs.")
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentType, jsonType)
 		_, _ = w.Write(b)
 	default:
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		w.Header().Set(contentType, jsonType)
+		b, _ := ErrorMessage("Unrecognized Command")
+		_, _ = w.Write(b)
 	}
 }
 
@@ -110,7 +114,7 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	// use the token to get an authenticated client
 	client := spotifyClient.Authenticator.NewClient(tok)
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(contentType, "text/html")
 	_, _ = fmt.Fprintf(w, "Login Completed!")
 	spotifyClient.Channel <- &client
 }
