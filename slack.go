@@ -8,20 +8,31 @@ import (
 )
 
 func NowPlayingMessage() ([]byte, error) {
+	if spotifyClient.Client == nil {
+		return ErrorMessage("Please ask an Admin to log into Spotify")
+	}
 	song, err := spotifyClient.NowPlaying()
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
-	attachments := []slack.Attachment{
-		{
-			Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-			TitleLink: song.url,
-		},
-	}
-	slackMsg := &slack.Msg{
-		Text:        "🎵 Now playing...",
-		Attachments: attachments,
+
+	var slackMsg *slack.Msg
+	if song == nil {
+		slackMsg = &slack.Msg{
+			Text: "There is no music playing.",
+		}
+	} else {
+		attachments := []slack.Attachment{
+			{
+				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
+				TitleLink: song.url,
+			},
+		}
+		slackMsg = &slack.Msg{
+			Text:        "🎵 Now playing...",
+			Attachments: attachments,
+		}
 	}
 	b, err := json.Marshal(slackMsg)
 	if err != nil {
@@ -32,6 +43,9 @@ func NowPlayingMessage() ([]byte, error) {
 }
 
 func RecentlyPlayedMessage() ([]byte, error) {
+	if spotifyClient.Client == nil {
+		return ErrorMessage("Please ask an Admin to log into Spotify")
+	}
 	songs, err := spotifyClient.RecentlyPlayed()
 	if err != nil {
 		log.Print(err)
@@ -59,10 +73,9 @@ func RecentlyPlayedMessage() ([]byte, error) {
 func ErrorMessage(errorMessage string) ([]byte, error) {
 	//contactUser := os.Getenv("ContactUser")
 	slackMsg := &slack.Msg{
-		Text: "Uh-Oh, Something went wrong:",
+		Text: errorMessage,
 		Attachments: []slack.Attachment{
-			{Title: errorMessage},
-			{Title: fmt.Sprint("If this error persists contact (bx:<@UD0NXF3UY|sean>) <@U1055Q4A0|sean>")},
+			{Title: fmt.Sprint("If this error persists contact <@U1055Q4A0|sean>")},//(bx:<@UD0NXF3UY|sean>)
 		},
 	}
 	b, err := toJsonBody(slackMsg)
@@ -81,7 +94,7 @@ func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
 	return b, nil
 }
 
-func SendLoginMessage(url string)  {
+func SendLoginMessage(url string) {
 	webhook := "https://hooks.slack.com/services/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"
 	slackMsg := &slack.WebhookMessage{
 		Attachments: []slack.Attachment{
