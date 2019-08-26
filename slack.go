@@ -9,7 +9,7 @@ import (
 
 func NowPlayingMessage() ([]byte, error) {
 	if spotifyClient.Client == nil {
-		return ErrorMessage("Please ask an Admin to log into Spotify")
+		return ErrorMessage("Please ask an Admin to log in to Spotify")
 	}
 	song, err := spotifyClient.NowPlaying()
 	if err != nil {
@@ -25,8 +25,8 @@ func NowPlayingMessage() ([]byte, error) {
 	} else {
 		attachments := []slack.Attachment{
 			{
-				Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-				TitleLink: song.url,
+				Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
+				TitleLink: song.Url,
 			},
 		}
 		slackMsg = &slack.Msg{
@@ -34,17 +34,12 @@ func NowPlayingMessage() ([]byte, error) {
 			Attachments: attachments,
 		}
 	}
-	b, err := json.Marshal(slackMsg)
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-	return b, nil
+	return toJsonBody(slackMsg)
 }
 
 func RecentlyPlayedMessage() ([]byte, error) {
 	if spotifyClient.Client == nil {
-		return ErrorMessage("Please ask an Admin to log into Spotify")
+		return ErrorMessage("Please ask an Admin to log in to Spotify")
 	}
 	songs, err := spotifyClient.RecentlyPlayed()
 	if err != nil {
@@ -54,8 +49,8 @@ func RecentlyPlayedMessage() ([]byte, error) {
 	attachments := make([]slack.Attachment, 0)
 	for _, song := range songs {
 		attachment := slack.Attachment{
-			Title:     fmt.Sprintf("%s by %s", song.title, song.artist),
-			TitleLink: song.url,
+			Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
+			TitleLink: song.Url,
 		}
 		attachments = append(attachments, attachment)
 	}
@@ -63,26 +58,18 @@ func RecentlyPlayedMessage() ([]byte, error) {
 		Text:        "🎵 Recently Played Songs",
 		Attachments: attachments,
 	}
-	b, err := toJsonBody(slackMsg)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
+	return toJsonBody(slackMsg)
 }
 
 func ErrorMessage(errorMessage string) ([]byte, error) {
 	//contactUser := os.Getenv("ContactUser")
 	slackMsg := &slack.Msg{
-		Text: errorMessage,
+		Text: fmt.Sprintf("%s If this error", errorMessage),
 		Attachments: []slack.Attachment{
-			{Title: fmt.Sprint("If this error persists contact <@U1055Q4A0|sean>")},//(bx:<@UD0NXF3UY|sean>)
+			{Title: fmt.Sprint("If this error persists contact <@UD0NXF3UY|sean>")},
 		},
 	}
-	b, err := toJsonBody(slackMsg)
-	if err != nil {
-		return b, err
-	}
-	return b, nil
+	return toJsonBody(slackMsg)
 }
 
 func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
@@ -104,10 +91,6 @@ func SendLoginMessage(url string) {
 			},
 		},
 	}
-	//b, err := toJsonBody(slackMsg)
-	//if err != nil {
-	//	log.Print(err)
-	//}
 	err := slack.PostWebhook(webhook, slackMsg)
 	if err != nil {
 		log.Print(err)

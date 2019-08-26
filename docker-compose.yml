@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8080:8080
+      - 80:80
     environment:
       - SPOTIFY_ID=ea5e4e553fd94ea8b55a24f8e36dec42
-      - SPOTIFY_SECRET=a12724ef112b4f9fa049c0d1ac4a7841
+      - SONG_HISTORY_LENGTH=3
+      - AUTH_CALLBACK=http://localhost/callback

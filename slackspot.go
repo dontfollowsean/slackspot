@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/zmb3/spotify"
@@ -8,47 +9,65 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 const (
-	redirectURI = "http://localhost:8080/callback" //todo  auth callback move to env
 	contentType = "Content-Type"
 	jsonType    = "application/json"
+	textHtml    = "text/html"
 )
 
-var spotifyClient *SpotifyClient
+var (
+	spotifyClient      *SpotifyClient
+	slackSigningSecret string
+	redirectURI        string
+	songHistoryLength  int
+)
 
-func main() {
+func init() {
+	slackSigningSecret = getEnv("SLACK_SIGNING_SECRET", "") // todo regenerate me
+	redirectURI = getEnv("AUTH_CALLBACK", "http://1/callback")
+	var err error
+	songHistoryLength, err = strconv.Atoi(getEnv("SONG_HISTORY_LENGTH", "3"))
+	if err != nil {
+		songHistoryLength = 3
+	}
 	spotifyClient = &SpotifyClient{
 		Client:        nil,
 		Authenticator: spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadRecentlyPlayed),
 		State:         "bx",
 		Channel:       make(chan *spotify.Client),
 	}
+}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		url := spotifyClient.Authenticator.AuthURL(spotifyClient.State)
-		_, _ = fmt.Fprintf(w, "Spotify-Slack Integration\n Please log in to Spotify by visiting the following page in your browser: %s", url)
-	})
+func main() {
 	http.HandleFunc("/callback", completeAuth)
+	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
+	http.HandleFunc("/lastplayed", recentlyPlayedHandler)
 	http.HandleFunc("/slack", slackHandler)
 
 	go spotifyClient.Login()
 
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":80", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Print("Listening on port 80")
+}
 
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(contentType, textHtml)
+	url := spotifyClient.Authenticator.AuthURL(spotifyClient.State)
+	_, _ = fmt.Fprintf(w, "Log in to Spotify <a href=\"%s\">here</a>", url)
 }
 
 func slackHandler(w http.ResponseWriter, r *http.Request) {
-	const signingSecret = "a1f7c0caf421f4c61def057c4b1c7cf9" // todo regenerate me and get from env
-	//signingSecret := os.Getenv("SlackSigningSecret")
-	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
+	verifier, err := slack.NewSecretsVerifier(r.Header, slackSigningSecret)
 	if err != nil {
-		log.Print(err)
+		log.Printf("new secrets verifier err: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -56,13 +75,13 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = ioutil.NopCloser(io.TeeReader(r.Body, &verifier))
 	s, err := slack.SlashCommandParse(r)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error parsing slash command: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err = verifier.Ensure(); err != nil {
-		log.Print(err)
+		log.Printf("error verifying authorization: %v", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -72,7 +91,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 		b, err := NowPlayingMessage()
 		if err != nil {
 			w.Header().Set(contentType, jsonType)
-			b, _ = ErrorMessage("Cannot get currently playing song.")
+			b, _ = ErrorMessage("⛔️ Cannot get currently playing song.")
 		}
 		w.Header().Set(contentType, jsonType)
 		_, _ = w.Write(b)
@@ -80,7 +99,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 		b, err := RecentlyPlayedMessage()
 		if err != nil {
 			w.Header().Set(contentType, jsonType)
-			b, _ = ErrorMessage("Cannot get recently played songs.")
+			b, _ = ErrorMessage("⛔️ Cannot get recently played songs.")
 		}
 		w.Header().Set(contentType, jsonType)
 		_, _ = w.Write(b)
@@ -94,12 +113,36 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	if spotifyClient.Client == nil {
 		_, _ = fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
-		go spotifyClient.Login()
+		return
+	}
+	w.Header().Set(contentType, jsonType)
+	nowPlaying, _ := spotifyClient.NowPlaying()
+	var b []byte
+	var err error
+	if nowPlaying != nil {
+		b, err = json.Marshal(nowPlaying)
+	} else {
+		b, err = json.Marshal(Song{})
+	}
+	_, _ = w.Write(b)
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+func recentlyPlayedHandler(w http.ResponseWriter, r *http.Request) {
+	if spotifyClient.Client == nil {
+		_, _ = fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
 		return
 	}
 
-	nowPlaying, _ := spotifyClient.NowPlaying()
-	_, _ = fmt.Fprint(w, nowPlaying)
+	w.Header().Set(contentType, jsonType)
+	recentlyPlayed, _ := spotifyClient.RecentlyPlayed()
+	b, err := json.Marshal(recentlyPlayed)
+	_, _ = w.Write(b)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +157,14 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	// use the token to get an authenticated client
 	client := spotifyClient.Authenticator.NewClient(tok)
-	w.Header().Set(contentType, "text/html")
+	w.Header().Set(contentType, textHtml)
 	_, _ = fmt.Fprintf(w, "Login Completed!")
 	spotifyClient.Channel <- &client
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

@@ -7,8 +7,6 @@ import (
 	"log"
 )
 
-const songHistoryLength = 3 // todo config
-
 type SpotifyClient struct {
 	Client        *spotify.Client
 	Authenticator spotify.Authenticator
@@ -17,9 +15,9 @@ type SpotifyClient struct {
 }
 
 type Song struct {
-	title  string
-	artist string
-	url    string
+	Title  string `json:"title"`
+	Artist string `json:"artist"`
+	Url    string `json:"url"`
 }
 
 func (c *SpotifyClient) Login() {
@@ -45,9 +43,9 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 	songs := make([]*Song, songHistoryLength)
 	for i, song := range recentlyPlayed[:songHistoryLength] {
 		s := &Song{
-			title:  song.Track.Name,
-			artist: getArtists(song.Track),
-			url:    song.Track.ExternalURLs["spotify"],
+			Title:  song.Track.Name,
+			Artist: getArtists(song.Track),
+			Url:    song.Track.ExternalURLs["spotify"],
 		}
 		songs[i] = s
 	}
