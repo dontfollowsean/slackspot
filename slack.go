@@ -19,7 +19,7 @@ func NowPlayingMessage() ([]byte, error) {
 	var slackMsg *slack.Msg
 	if song == nil {
 		slackMsg = &slack.Msg{
-			Text: "There is no music playing.",
+			Text: "There's no music playing.",
 		}
 	} else {
 		attachments := []slack.Attachment{

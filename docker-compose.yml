@@ -7,9 +7,3 @@ services:
       dockerfile: Dockerfile
     ports:
       - 80:80
-    environment:
-      - SPOTIFY_ID=ea5e4e553fd94ea8b55a24f8e36dec42
-      - SONG_HISTORY_LENGTH=3
-      - AUTH_CALLBACK=http://localhost/callback
-      - CONTACT_SLACK_USER=<@UD0NXF3UY>
-      - SLACK_ADMIN_WEBHOOK=https://hooks.slack.com/services/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
