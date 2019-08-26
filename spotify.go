@@ -57,6 +57,9 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
 	if err != nil {
 		log.Printf("error getting currently playing song: %s", err)
+		if err.Error() == "EOF" {
+			return nil, nil // there's no music playing
+		}
 		return nil, err
 	}
 

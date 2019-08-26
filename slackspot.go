@@ -81,6 +81,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	log.Printf("username:%s userID:%s command:%s", s.UserName, s.UserID, s.Command)
 
 	if err = verifier.Ensure(); err != nil {
 		log.Printf("error verifying authorization: %v", err)
