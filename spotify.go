@@ -30,7 +30,7 @@ func (c *SpotifyClient) Login() {
 	// use the client to make calls that require authorization
 	user, err := c.Client.CurrentUser()
 	if err != nil {
-		log.Print(err)
+		log.Printf("error getting current user: %s", err)
 	}
 	fmt.Println("logged in as:", user.ID)
 }
@@ -38,6 +38,7 @@ func (c *SpotifyClient) Login() {
 func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 	recentlyPlayed, err := c.Client.PlayerRecentlyPlayed();
 	if err != nil {
+		log.Printf("error getting recently played songs: %s", err)
 		return nil, err
 	}
 	songs := make([]*Song, songHistoryLength)
@@ -54,8 +55,8 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 
 func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	currentlyPlaying, err := c.Client.PlayerCurrentlyPlaying()
-
 	if err != nil {
+		log.Printf("error getting currently playing song: %s", err)
 		return nil, err
 	}
 

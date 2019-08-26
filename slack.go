@@ -13,7 +13,6 @@ func NowPlayingMessage() ([]byte, error) {
 	}
 	song, err := spotifyClient.NowPlaying()
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 
@@ -43,7 +42,6 @@ func RecentlyPlayedMessage() ([]byte, error) {
 	}
 	songs, err := spotifyClient.RecentlyPlayed()
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	attachments := make([]slack.Attachment, 0)
@@ -62,12 +60,8 @@ func RecentlyPlayedMessage() ([]byte, error) {
 }
 
 func ErrorMessage(errorMessage string) ([]byte, error) {
-	//contactUser := os.Getenv("ContactUser")
 	slackMsg := &slack.Msg{
-		Text: fmt.Sprintf("%s If this error", errorMessage),
-		Attachments: []slack.Attachment{
-			{Title: fmt.Sprint("If this error persists contact <@UD0NXF3UY|sean>")},
-		},
+		Text: fmt.Sprintf("%s If this error persists contact %s", errorMessage, contactUser),
 	}
 	return toJsonBody(slackMsg)
 }
@@ -75,14 +69,14 @@ func ErrorMessage(errorMessage string) ([]byte, error) {
 func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
 	b, err := json.Marshal(slackMsg)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error marshalling to json: %s", err)
 		return nil, err
 	}
 	return b, nil
 }
 
 func SendLoginMessage(url string) {
-	webhook := "https://hooks.slack.com/services/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"
+	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
 		Attachments: []slack.Attachment{
 			{
@@ -93,6 +87,6 @@ func SendLoginMessage(url string) {
 	}
 	err := slack.PostWebhook(webhook, slackMsg)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error posting to webhook: %s", err)
 	}
 }

@@ -24,11 +24,12 @@ var (
 	slackSigningSecret string
 	redirectURI        string
 	songHistoryLength  int
+	contactUser        string
 )
 
 func init() {
-	slackSigningSecret = getEnv("SLACK_SIGNING_SECRET", "") // todo regenerate me
-	redirectURI = getEnv("AUTH_CALLBACK", "http://1/callback")
+	slackSigningSecret = getEnv("SLACK_SIGNING_SECRET", "")
+	redirectURI = getEnv("AUTH_CALLBACK", "http://localhost/callback")
 	var err error
 	songHistoryLength, err = strconv.Atoi(getEnv("SONG_HISTORY_LENGTH", "3"))
 	if err != nil {
@@ -40,6 +41,7 @@ func init() {
 		State:         "bx",
 		Channel:       make(chan *spotify.Client),
 	}
+	contactUser = getEnv("CONTACT_SLACK_USER", "Sean Wilkinson")
 }
 
 func main() {
