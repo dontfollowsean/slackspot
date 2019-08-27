@@ -119,6 +119,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set(contentType, jsonType)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	nowPlaying, _ := spotifyClient.NowPlaying()
 	var b []byte
 	var err error
@@ -140,6 +141,7 @@ func recentlyPlayedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(contentType, jsonType)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	recentlyPlayed, _ := spotifyClient.RecentlyPlayed()
 	b, err := json.Marshal(recentlyPlayed)
 	_, _ = w.Write(b)
