@@ -26,7 +26,7 @@ Slackspot is a slack integration that allows users of a slack workspace to inter
 ## Endpoints 
 
 ### `/nowplaying`
-Returns a json object containing metadata about the song currently playing. 
+Returns a json object containing metadata about the song currently playing or 404 when there is no music playing.
 ```json
 {
 	"title": "Song Title", 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
+	"github.com/zmb3/spotify"
 	"log"
 )
 
@@ -26,6 +27,7 @@ func NowPlayingMessage() ([]byte, error) {
 			{
 				Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
 				TitleLink: song.Url,
+				ImageURL:  getImageUrl(song.Images, 300),
 			},
 		}
 		slackMsg = &slack.Msg{
@@ -49,6 +51,7 @@ func RecentlyPlayedMessage() ([]byte, error) {
 		attachment := slack.Attachment{
 			Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
 			TitleLink: song.Url,
+			ImageURL:  getImageUrl(song.Images, 64),
 		}
 		attachments = append(attachments, attachment)
 	}
@@ -75,6 +78,16 @@ func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
 	return b, nil
 }
 
+func getImageUrl(images []spotify.Image, height int) string {
+	var songImgUrl string
+	for _, img := range images {
+		if img.Height == height {
+			songImgUrl = img.URL
+		}
+	}
+	return songImgUrl
+}
+
 func SendLoginMessage(url string) {
 	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
@@ -91,10 +104,10 @@ func SendLoginMessage(url string) {
 	}
 }
 
-func SendLoginSuccessMessage()  {
+func SendLoginSuccessMessage() {
 	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
-		Text:        "Login Successful",
+		Text: "Login Successful",
 	}
 	err := slack.PostWebhook(webhook, slackMsg)
 	if err != nil {
