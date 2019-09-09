@@ -53,18 +53,10 @@ func main() {
 
 	go spotifyClient.Login()
 
-	go func() {
-		log.Print("Listening on port 443")
-		err := http.ListenAndServeTLS(":443", "_server.cert", "_server.key", nil)
-		if err != nil {
-			log.Fatal("ListenAndServeTLS: ", err)
-		}
-	}()
-
 	log.Print("Listening on port 80")
 	err := http.ListenAndServe(":80", nil)
 	if err != nil {
-		log.Fatal("ListenAndServe",err)
+		log.Fatal("ListenAndServe: ",err)
 	}
 }
 
