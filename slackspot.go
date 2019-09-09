@@ -49,7 +49,7 @@ func main() {
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
-	http.HandleFunc("/lastplayed", recentlyPlayedHandler)
+	http.HandleFunc("/recentlyplayed", recentlyPlayedHandler)
 	http.HandleFunc("/slack", slackHandler)
 
 	go spotifyClient.Login()
@@ -99,7 +99,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set(contentType, jsonType)
 		_, _ = w.Write(b)
-	case "/lastplayed":
+	case "/recentlyplayed":
 		b, err := RecentlyPlayedMessage()
 		if err != nil {
 			w.Header().Set(contentType, jsonType)

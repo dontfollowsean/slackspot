@@ -13,7 +13,7 @@ Slackspot is a slack integration that allows users of a slack workspace to inter
 	* Save Slack Secret Key
 	* Create incoming webhook for admin alerts
 	* Add `/nowplaying` slash command
-	* Add `/lastplayed` slash command
+	* Add `/recentlyplayed` slash command
 * Optional: Add SSL cert and key to project root for https connections. 
 
 ### Start server:
@@ -51,7 +51,7 @@ Returns a json object containing metadata about the song currently playing.
 } 
 ```
 
-### `/lastplayed`
+### `/recentlyplayed`
 Returns an array of json objects containing metadata about the most recently played songs. Size of this array is configured using the `SONG_HISTORY_LENGTH` environment variable. 
 ```json
 [{
@@ -138,7 +138,7 @@ These commands must be specified when configuring the slash commands for your sl
 ###  `/nowplaying`
 Will display the currently playing song. 
 
-### `/lastplayed`
+### `/recentlyplayed`
 Will display the most recently played songs. 
 
 ---
