@@ -45,6 +45,7 @@ func init() {
 }
 
 func main() {
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)

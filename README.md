@@ -128,6 +128,9 @@ Displays a link to log in to a Spotify account with the permission to read curre
 ### `/callback`
 This endpoint is used to finish authenticating a Spotify login request. This url is configured using the `AUTH_CALLBACK` environment variable and must also be specified when creating the Spotify app. 
 
+### `/`
+Serves files located in `[PROJECT_ROOT]/static` directory
+
 ---
 ## Slack Slash Commands
 These commands must be specified when configuring the slash commands for your slack workspace. They should be pointing to the `/slack` endpoint. 
