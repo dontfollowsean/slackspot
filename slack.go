@@ -90,3 +90,14 @@ func SendLoginMessage(url string) {
 		log.Printf("error posting to webhook: %s", err)
 	}
 }
+
+func SendLoginSuccessMessage()  {
+	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
+	slackMsg := &slack.WebhookMessage{
+		Text:        "Login Successful",
+	}
+	err := slack.PostWebhook(webhook, slackMsg)
+	if err != nil {
+		log.Printf("error posting to webhook: %s", err)
+	}
+}

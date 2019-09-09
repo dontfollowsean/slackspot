@@ -41,7 +41,7 @@ func init() {
 		State:         "bx",
 		Channel:       make(chan *spotify.Client),
 	}
-	contactUser = getEnv("CONTACT_SLACK_USER", "Sean Wilkinson")
+	contactUser = getEnv("CONTACT_SLACK_USER", "an Administrator")
 }
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 	log.Print("Listening on port 80")
 	err := http.ListenAndServe(":80", nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ",err)
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
 
@@ -162,11 +162,11 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		log.Printf("State mismatch: %s != %s\n", st, spotifyClient.State)
 	}
-	// use the token to get an authenticated client
 	client := spotifyClient.Authenticator.NewClient(tok)
 	w.Header().Set(contentType, textHtml)
 	_, _ = fmt.Fprintf(w, "Login Completed!")
 	spotifyClient.Channel <- &client
+	SendLoginSuccessMessage()
 }
 
 func getEnv(key, fallback string) string {
