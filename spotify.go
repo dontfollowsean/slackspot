@@ -33,7 +33,7 @@ func (c *SpotifyClient) Login() {
 	if err != nil {
 		log.Printf("error getting current user: %s", err)
 	}
-	fmt.Println("logged in as:", user.ID)
+	fmt.Println("logged in as:", user.DisplayName)
 }
 
 func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {

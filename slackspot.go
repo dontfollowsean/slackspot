@@ -62,6 +62,7 @@ func main() {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	go spotifyClient.Login()
 	w.Header().Set(contentType, textHtml)
 	url := spotifyClient.Authenticator.AuthURL(spotifyClient.State)
 	_, _ = fmt.Fprintf(w, "Log in to Spotify <a href=\"%s\">here</a>", url)
@@ -163,10 +164,11 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		log.Printf("State mismatch: %s != %s\n", st, spotifyClient.State)
 	}
 	client := spotifyClient.Authenticator.NewClient(tok)
+	user, _ := client.CurrentUser()
 	w.Header().Set(contentType, textHtml)
 	_, _ = fmt.Fprintf(w, "Login Completed!")
 	spotifyClient.Channel <- &client
-	SendLoginSuccessMessage()
+	SendLoginSuccessMessage(user)
 }
 
 func getEnv(key, fallback string) string {

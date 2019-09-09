@@ -104,10 +104,10 @@ func SendLoginMessage(url string) {
 	}
 }
 
-func SendLoginSuccessMessage() {
+func SendLoginSuccessMessage(user *spotify.PrivateUser) {
 	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
-		Text: "Login Successful",
+		Text: fmt.Sprintf("Logged in as %s", user.DisplayName),
 	}
 	err := slack.PostWebhook(webhook, slackMsg)
 	if err != nil {
