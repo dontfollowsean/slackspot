@@ -80,7 +80,7 @@ func SendLoginMessage(url string) {
 	slackMsg := &slack.WebhookMessage{
 		Attachments: []slack.Attachment{
 			{
-				Title:     "Log into Spotify here",
+				Title:     "Log in to Spotify here",
 				TitleLink: url,
 			},
 		},

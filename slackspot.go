@@ -116,7 +116,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 
 func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	if spotifyClient.Client == nil {
-		_, _ = fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
+		_, _ = fmt.Fprint(w, "Please Log in to the BounceX Spotify Account")
 		return
 	}
 	w.Header().Set(contentType, jsonType)
@@ -138,7 +138,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 
 func recentlyPlayedHandler(w http.ResponseWriter, r *http.Request) {
 	if spotifyClient.Client == nil {
-		_, _ = fmt.Fprint(w, "Please Log into the BounceX Spotify Account")
+		_, _ = fmt.Fprint(w, "Please Log in to the BounceX Spotify Account")
 		return
 	}
 
