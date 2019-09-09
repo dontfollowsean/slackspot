@@ -53,11 +53,19 @@ func main() {
 
 	go spotifyClient.Login()
 
+	go func() {
+		log.Print("Listening on port 443")
+		err := http.ListenAndServeTLS(":443", "_server.cert", "_server.key", nil)
+		if err != nil {
+			log.Fatal("ListenAndServeTLS: ", err)
+		}
+	}()
+
+	log.Print("Listening on port 80")
 	err := http.ListenAndServe(":80", nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("ListenAndServe",err)
 	}
-	log.Print("Listening on port 80")
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +134,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	if nowPlaying != nil {
 		b, err = json.Marshal(nowPlaying)
 	} else {
+		w.WriteHeader(http.StatusNotFound)
 		b, err = json.Marshal(Song{})
 	}
 	_, _ = w.Write(b)
