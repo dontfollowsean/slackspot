@@ -91,3 +91,13 @@ func getArtists(song spotify.SimpleTrack) string {
 	}
 	return artists.String()
 }
+
+func getImageUrl(images []spotify.Image, width int) string {
+	var songImgUrl string
+	for _, img := range images {
+		if img.Width == width {
+			songImgUrl = img.URL
+		}
+	}
+	return songImgUrl
+}

@@ -64,8 +64,7 @@ func main() {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	go spotifyClient.Login()
 	w.Header().Set(contentType, textHtml)
-	url := spotifyClient.Authenticator.AuthURL(spotifyClient.State)
-	_, _ = fmt.Fprintf(w, "Log in to Spotify <a href=\"%s\">here</a>", url)
+	_, _ = fmt.Fprint(w, "A link to log in to Spotify has been sent to the Slack Admin")
 }
 
 func slackHandler(w http.ResponseWriter, r *http.Request) {

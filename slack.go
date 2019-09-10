@@ -78,16 +78,6 @@ func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
 	return b, nil
 }
 
-func getImageUrl(images []spotify.Image, width int) string {
-	var songImgUrl string
-	for _, img := range images {
-		if img.Width == width {
-			songImgUrl = img.URL
-		}
-	}
-	return songImgUrl
-}
-
 func SendLoginMessage(url string) {
 	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{

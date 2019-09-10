@@ -123,7 +123,7 @@ Returns an array of json objects containing metadata about the most recently pla
 For use with slack slash commands. 
 
 ### `/login`
-Displays a link to log in to a Spotify account with the permission to read currently playing and recently played songs
+Sends a link to log in to a Spotify account with the permission to read currently playing and recently played songs to the Slack Admin webhook.
 
 ### `/callback`
 This endpoint is used to finish authenticating a Spotify login request. This url is configured using the `AUTH_CALLBACK` environment variable and must also be specified when creating the Spotify app. 
