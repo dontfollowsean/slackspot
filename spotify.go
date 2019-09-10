@@ -48,9 +48,11 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 	songs := make([]*Song, songHistoryLength)
 	for i, song := range recentlyPlayed[:songHistoryLength] {
 		s := &Song{
-			Title:  song.Track.Name,
-			Artist: getArtists(song.Track),
-			Url:    song.Track.ExternalURLs["spotify"],
+			ID:       song.Track.ID.String(),
+			Title:    song.Track.Name,
+			Artist:   getArtists(song.Track),
+			Url:      song.Track.ExternalURLs["spotify"],
+			Duration: song.Track.Duration,
 		}
 		fullTrack, err := c.Client.GetTrack(song.Track.ID)
 		if err == nil {
@@ -76,13 +78,13 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	}
 
 	song := &Song{
-		currentlyPlaying.Item.ID.String(),
-		currentlyPlaying.Item.Name,
-		getArtists(currentlyPlaying.Item.SimpleTrack),
-		currentlyPlaying.Item.ExternalURLs["spotify"],
-		currentlyPlaying.Item.Album.Images,
-		currentlyPlaying.Progress,
-		currentlyPlaying.Item.Duration,
+		ID:       currentlyPlaying.Item.ID.String(),
+		Title:    currentlyPlaying.Item.Name,
+		Artist:   getArtists(currentlyPlaying.Item.SimpleTrack),
+		Url:      currentlyPlaying.Item.ExternalURLs["spotify"],
+		Images:   currentlyPlaying.Item.Album.Images,
+		Progress: currentlyPlaying.Progress,
+		Duration: currentlyPlaying.Item.Duration,
 	}
 	return song, nil
 }
