@@ -8,7 +8,7 @@ Slackspot is a slack integration that allows users of a slack workspace to inter
 ### Set up:
 * Create Spotify app
 	* Save client ID
-	* Specify auth callback url
+	* Specify auth callback url (`{SLACKSPOT_HOST}/callback`)
 * Create Slack app
 	* Save Slack Secret Key
 	* Create incoming webhook for admin alerts
@@ -151,8 +151,8 @@ Will display the most recently played songs.
 
 `SPOTIFY_SECRET`: Secret key used to interact with the Spotify API.
 
-`CONTACT_SLACK_USER`: Used in message displayed to slack users when there is an error processing a request. When a slack user ID or channel ID is provided (`<userID | channelID>`) a clickable link will be shown. Default value is "an Admin". 
+`CONTACT_SLACK_USER`: Used in message displayed to slack users when there is an error processing a request. When a slack user ID or channel ID is provided (`<@userID|#channelID>`) a clickable link will be shown. Default value is "an Admin". 
 
 `SLACK_ADMIN_WEBHOOK`: Webhook used to send messages to administrators. For example a link to log in to a Spotify account on start up. This webhook can be for a channel or for a single user.
 
-`AUTH_CALLBACK`: Used by the Spotify API to finish authenticating a login request. Default value is "http://localhost/callback".
+`SLACKSPOT_HOST`: Domain name or IP address of slackspot server. Default value is `http://localhost`.
