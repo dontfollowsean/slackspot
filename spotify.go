@@ -15,10 +15,13 @@ type SpotifyClient struct {
 }
 
 type Song struct {
-	Title  string          `json:"title"`
-	Artist string          `json:"artist"`
-	Url    string          `json:"url"`
-	Images []spotify.Image `json:"images"`
+	ID       string          `json:"id"`
+	Title    string          `json:"title"`
+	Artist   string          `json:"artist"`
+	Url      string          `json:"url"`
+	Images   []spotify.Image `json:"images"`
+	Progress int             `json:"progress"`
+	Duration int             `json:"duration"`
 }
 
 func (c *SpotifyClient) Login() {
@@ -73,10 +76,13 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	}
 
 	song := &Song{
+		currentlyPlaying.Item.ID.String(),
 		currentlyPlaying.Item.Name,
 		getArtists(currentlyPlaying.Item.SimpleTrack),
 		currentlyPlaying.Item.ExternalURLs["spotify"],
 		currentlyPlaying.Item.Album.Images,
+		currentlyPlaying.Progress,
+		currentlyPlaying.Item.Duration,
 	}
 	return song, nil
 }
