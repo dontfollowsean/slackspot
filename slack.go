@@ -25,19 +25,20 @@ func NowPlayingMessage() ([]byte, error) {
 	} else {
 		attachments := []slack.Attachment{
 			{
-				Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
-				TitleLink: song.Url,
+				Title:     song.Title,
+				TitleLink: song.SongUrl,
+				Text:      getArtistText(song.Artist),
 				ImageURL:  getImageUrl(song.Images, 300),
 			},
 		}
-		var text string
-		if host == "" {
-			text = "🎵 Now playing..."
-		} else {
-			text = fmt.Sprintf("🎵 <%s|Now playing...>", host)
-		}
+		//var text string //TODO this is to link to hosted ui
+		//if host == "" {
+		//	text = "🎵 Now playing..."
+		//} else {
+		//	text = fmt.Sprintf("🎵 <%s|Now playing...>", host)
+		//}
 		slackMsg = &slack.Msg{
-			Text:        text,
+			Text:        "🎵 Now playing...",
 			Attachments: attachments,
 		}
 	}
@@ -55,20 +56,22 @@ func RecentlyPlayedMessage() ([]byte, error) {
 	attachments := make([]slack.Attachment, 0)
 	for _, song := range songs {
 		attachment := slack.Attachment{
-			Title:     fmt.Sprintf("%s by %s", song.Title, song.Artist),
-			TitleLink: song.Url,
-			ImageURL:  getImageUrl(song.Images, 64),
+			Title:      song.Title,
+			TitleLink:  song.SongUrl,
+			Text:       getArtistText(song.Artist),
+			MarkdownIn: []string{"text"},
+			ThumbURL:   getImageUrl(song.Images, 300),
 		}
 		attachments = append(attachments, attachment)
 	}
-	var text string
-	if host == "" {
-		text = "🎵 Recently Played Songs"
-	} else {
-		text = fmt.Sprintf("🎵 <%s|Recently Played Songs>", host)
-	}
+	//var text string //TODO this is to link to hosted ui
+	//if host == "" {
+	//	text = "🎵 Recently Played Songs"
+	//} else {
+	//	text = fmt.Sprintf("🎵 <%s|Recently Played Songs>", host)
+	//}
 	slackMsg := &slack.Msg{
-		Text:        text,
+		Text:        "🎵 Recently Played Songs",
 		Attachments: attachments,
 	}
 	return toJsonBody(slackMsg)

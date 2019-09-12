@@ -17,11 +17,17 @@ type SpotifyClient struct {
 type Song struct {
 	ID       string          `json:"id"`
 	Title    string          `json:"title"`
-	Artist   string          `json:"artist"`
-	Url      string          `json:"url"`
+	Artist   []*Artist       `json:"artist"`
+	SongUrl  string          `json:"url"`
 	Images   []spotify.Image `json:"images"`
 	Progress int             `json:"progress"`
 	Duration int             `json:"duration"`
+}
+
+type Artist struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Url  string `json:"url"`
 }
 
 func (c *SpotifyClient) Login() {
@@ -47,11 +53,12 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 	}
 	songs := make([]*Song, songHistoryLength)
 	for i, song := range recentlyPlayed[:songHistoryLength] {
+		artists := getArtist(song.Track)
 		s := &Song{
 			ID:       song.Track.ID.String(),
 			Title:    song.Track.Name,
-			Artist:   getArtists(song.Track),
-			Url:      song.Track.ExternalURLs["spotify"],
+			Artist:   artists,
+			SongUrl:  song.Track.ExternalURLs["spotify"],
 			Duration: song.Track.Duration,
 		}
 		fullTrack, err := c.Client.GetTrack(song.Track.ID)
@@ -76,12 +83,12 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil {
 		return nil, nil
 	}
-
+	artists := getArtist(currentlyPlaying.Item.SimpleTrack)
 	song := &Song{
 		ID:       currentlyPlaying.Item.ID.String(),
 		Title:    currentlyPlaying.Item.Name,
-		Artist:   getArtists(currentlyPlaying.Item.SimpleTrack),
-		Url:      currentlyPlaying.Item.ExternalURLs["spotify"],
+		Artist:   artists,
+		SongUrl:  currentlyPlaying.Item.ExternalURLs["spotify"],
 		Images:   currentlyPlaying.Item.Album.Images,
 		Progress: currentlyPlaying.Progress,
 		Duration: currentlyPlaying.Item.Duration,
@@ -89,15 +96,33 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	return song, nil
 }
 
-func getArtists(song spotify.SimpleTrack) string {
-	var artists bytes.Buffer
-	for i, artist := range song.Artists {
-		if i > 0 {
-			artists.WriteString(", ")
+func getArtistText(artists []*Artist) string {
+	numOfArtists := len(artists)
+	var artistText bytes.Buffer
+	artistText.WriteString("by ")
+	for i, artist := range artists {
+		if i > 0 && numOfArtists > 2 {
+			artistText.WriteString(", ")
 		}
-		artists.WriteString(artist.Name)
+		if i > 0 && i == numOfArtists-1 {
+			artistText.WriteString(" and ")
+		}
+		artistText.WriteString(fmt.Sprintf("<%s|%s>", artist.Url, artist.Name))
 	}
-	return artists.String()
+	return artistText.String()
+}
+
+func getArtist(song spotify.SimpleTrack) []*Artist {
+	var artists []*Artist
+	for _, a := range song.Artists {
+		artist := &Artist{
+			ID:   a.ID.String(),
+			Name: a.Name,
+			Url:  a.ExternalURLs["spotify"],
+		}
+		artists = append(artists, artist)
+	}
+	return artists
 }
 
 func getImageUrl(images []spotify.Image, width int) string {
