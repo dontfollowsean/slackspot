@@ -129,7 +129,7 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	if nowPlaying != nil {
 		b, err = json.Marshal(nowPlaying)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNoContent)
 		b, err = json.Marshal(Song{})
 	}
 	_, _ = w.Write(b)
