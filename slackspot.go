@@ -30,7 +30,7 @@ var (
 
 func init() {
 	slackSigningSecret = getEnv("SLACK_SIGNING_SECRET", "")
-	host = getEnv("SLACKSPOT_HOST", "http://localhost")
+	host = getEnv("SLACKSPOT_HOST", "")
 	redirectURI = fmt.Sprintf("%s/callback", host)
 	var err error
 	songHistoryLength, err = strconv.Atoi(getEnv("SONG_HISTORY_LENGTH", "3"))

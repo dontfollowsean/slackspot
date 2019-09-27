@@ -31,14 +31,14 @@ func NowPlayingMessage() ([]byte, error) {
 				ImageURL:  getImageUrl(song.Images, 300),
 			},
 		}
-		//var text string //TODO this is to link to hosted ui
-		//if host == "" {
-		//	text = "🎵 Now playing..."
-		//} else {
-		//	text = fmt.Sprintf("🎵 <%s|Now playing...>", host)
-		//}
+		var text string //TODO this is to link to hosted ui
+		if host == "" {
+			text = "🎵 Now playing..."
+		} else {
+			text = fmt.Sprintf("🎵 <%s|Now playing...>", host)
+		}
 		slackMsg = &slack.Msg{
-			Text:        "🎵 Now playing...",
+			Text:        text,
 			Attachments: attachments,
 		}
 	}
@@ -64,14 +64,14 @@ func RecentlyPlayedMessage() ([]byte, error) {
 		}
 		attachments = append(attachments, attachment)
 	}
-	//var text string //TODO this is to link to hosted ui
-	//if host == "" {
-	//	text = "🎵 Recently Played Songs"
-	//} else {
-	//	text = fmt.Sprintf("🎵 <%s|Recently Played Songs>", host)
-	//}
+	var text string //TODO this is to link to hosted ui
+	if host == "" {
+		text = "🎵 Recently Played Songs"
+	} else {
+		text = fmt.Sprintf("🎵 <%s|Recently Played Songs>", host)
+	}
 	slackMsg := &slack.Msg{
-		Text:        "🎵 Recently Played Songs",
+		Text:        text,
 		Attachments: attachments,
 	}
 	return toJsonBody(slackMsg)
