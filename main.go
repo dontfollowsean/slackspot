@@ -2,28 +2,28 @@ package main
 
 import (
 	"fmt"
+	"github.com/caarlos0/env"
+	"github.com/kr/pretty"
+	"log"
 	"os"
-	"strconv"
 )
 
 type Config struct {
-	SlackSigingSecret  string
-	SpotifyRedirectURI string
-	ContactUser        string
-	SongHistoryLength  int
+	SlackSigingSecret  string `env:"SLACK_SIGNING_SECRET"`
+	SlackAdminWebhook  string `env:"SLACK_ADMIN_WEBHOOK"`
+	SpotifyRedirectURI string `env:"SPOTIFY_REDIRECT_URI"`
+	ContactUser        string `env:"CONTACT_SLACK_USER"`
+	SongHistoryLength  int    `env:"SONG_HISTORY_LENGTH" envDefault:"3"`
+}
+
+//var config *Config
+
+func (c Config) getDetails() interface{} {
+	return pretty.Sprint(c)
 }
 
 func main() {
-	songHistoryLength, err := strconv.Atoi(getEnv("SONG_HISTORY_LENGTH", "3"))
-	if err != nil {
-		songHistoryLength = 3
-	}
-	config := &Config{
-		SlackSigingSecret:  getEnv("SLACK_SIGNING_SECRET", ""),
-		SpotifyRedirectURI: getEnv("SPOTIFY_REDIRECT_URI", ""),
-		ContactUser:        getEnv("CONTACT_SLACK_USER", "an Administrator"),
-		SongHistoryLength:  songHistoryLength,
-	}
+	config := getAppConfig()
 
 	if err := run(config); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v", err)
@@ -31,9 +31,14 @@ func main() {
 	}
 }
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+func getAppConfig() *Config {
+	config := &Config{}
+	err := env.Parse(config)
+	if err != nil {
+		log.Printf(err.Error())
 	}
-	return fallback
+
+	log.Printf("Starting app with config : %s", config.getDetails())
+
+	return config
 }

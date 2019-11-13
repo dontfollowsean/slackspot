@@ -62,7 +62,7 @@ Returns a json object containing metadata about the song currently playing or 20
 ```
 
 ### `/recentlyplayed`
-Returns an array of json objects containing metadata about the most recently played songs. Size of this array is configured using the `SONG_HISTORY_LENGTH` environment variable. 
+Returns an array of json objects containing metadata about the most recently played songs. Size of this array is configured using the `SONG_HISTORY_LENGTH` environment variable or using `length` query parameter. 
 ```json
 [
    {
@@ -175,9 +175,6 @@ Sends a link to log in to a Spotify account with the permission to read currentl
 ### `/callback`
 This endpoint is used to finish authenticating a Spotify login request. This url must be specified when creating the Spotify app. 
 
-### `/`
-Serves files located in `{PROJECT_ROOT}/static` directory
-
 ---
 ## Slack Slash Commands
 These commands must be specified when configuring the slash commands for your slack workspace. They should be pointing to the `/slack` endpoint. 
@@ -192,7 +189,7 @@ Will display the most recently played songs.
 ## Environment Variables
 `SLACK_SIGNING_SECRET`: Secret key assigned by slack to allow access to workspace
 
-`SONG_HISTORY_LENGTH`: Number of songs to display as "recently played". Default value is 3 
+`SONG_HISTORY_LENGTH`: Number of songs to display as "recently played" when no query parameter is provided. Default value is 3 
 
 `SPOTIFY_ID`: Assigned Client ID used to interact with the Spotify API. 
 

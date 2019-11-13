@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -22,6 +23,7 @@ var (
 	spotifyClient      *SpotifyClient
 	slackSigningSecret string
 	contactUser        string
+	slackAdminWebhook  string
 	songHistoryLength  int
 )
 
@@ -33,10 +35,10 @@ func run(config *Config) error {
 		Channel:       make(chan *spotify.Client),
 	}
 	slackSigningSecret = config.SlackSigingSecret
+	slackAdminWebhook = config.SlackAdminWebhook
 	songHistoryLength = config.SongHistoryLength
 	contactUser = config.ContactUser
-	
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
@@ -122,7 +124,9 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set(contentType, jsonType)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	nowPlaying, _ := spotifyClient.NowPlaying()
+
 	var b []byte
 	var err error
 	if nowPlaying != nil {
@@ -145,7 +149,22 @@ func recentlyPlayedHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set(contentType, jsonType)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	recentlyPlayed, _ := spotifyClient.RecentlyPlayed()
+
+	lengthParam := r.URL.Query().Get("length")
+
+	var size int
+	if lengthParam == "" {
+		size = songHistoryLength
+	} else {
+		s, err := strconv.Atoi(lengthParam)
+		if err != nil {
+			size = songHistoryLength
+		} else {
+			size = s
+		}
+	}
+
+	recentlyPlayed, _ := spotifyClient.RecentlyPlayed(size)
 	b, err := json.Marshal(recentlyPlayed)
 	_, _ = w.Write(b)
 	if err != nil {
