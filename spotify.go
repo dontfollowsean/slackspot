@@ -45,14 +45,19 @@ func (c *SpotifyClient) Login() {
 	fmt.Println("logged in as:", user.DisplayName)
 }
 
-func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
-	recentlyPlayed, err := c.Client.PlayerRecentlyPlayed();
+func (c *SpotifyClient) RecentlyPlayed(length int) ([]*Song, error) {
+	recentlyPlayed, err := c.Client.PlayerRecentlyPlayed()
 	if err != nil {
 		log.Printf("error getting recently played songs: %s", err)
 		return nil, err
 	}
-	songs := make([]*Song, songHistoryLength)
-	for i, song := range recentlyPlayed[:songHistoryLength] {
+
+	if length > len(recentlyPlayed) {
+		length = len(recentlyPlayed)
+	}
+
+	songs := make([]*Song, length)
+	for i, song := range recentlyPlayed[:length] {
 		artists := getArtist(song.Track)
 		s := &Song{
 			ID:       song.Track.ID.String(),
@@ -67,6 +72,7 @@ func (c *SpotifyClient) RecentlyPlayed() ([]*Song, error) {
 		}
 		songs[i] = s
 	}
+
 	return songs, nil
 }
 
@@ -83,6 +89,7 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 	if !currentlyPlaying.Playing || currentlyPlaying.Item == nil {
 		return nil, nil
 	}
+
 	artists := getArtist(currentlyPlaying.Item.SimpleTrack)
 	song := &Song{
 		ID:       currentlyPlaying.Item.ID.String(),
@@ -93,6 +100,7 @@ func (c *SpotifyClient) NowPlaying() (*Song, error) {
 		Progress: currentlyPlaying.Progress,
 		Duration: currentlyPlaying.Item.Duration,
 	}
+
 	return song, nil
 }
 
@@ -100,6 +108,7 @@ func getArtistText(artists []*Artist) string {
 	numOfArtists := len(artists)
 	var artistText bytes.Buffer
 	artistText.WriteString("by ")
+
 	for i, artist := range artists {
 		if i > 0 && numOfArtists > 2 {
 			artistText.WriteString(", ")
@@ -109,6 +118,7 @@ func getArtistText(artists []*Artist) string {
 		}
 		artistText.WriteString(fmt.Sprintf("<%s|%s>", artist.Url, artist.Name))
 	}
+
 	return artistText.String()
 }
 
@@ -122,15 +132,18 @@ func getArtist(song spotify.SimpleTrack) []*Artist {
 		}
 		artists = append(artists, artist)
 	}
+
 	return artists
 }
 
 func getImageUrl(images []spotify.Image, width int) string {
 	var songImgUrl string
+
 	for _, img := range images {
 		if img.Width == width {
 			songImgUrl = img.URL
 		}
 	}
+
 	return songImgUrl
 }

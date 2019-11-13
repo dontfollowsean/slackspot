@@ -31,14 +31,8 @@ func NowPlayingMessage() ([]byte, error) {
 				ImageURL:  getImageUrl(song.Images, 300),
 			},
 		}
-		var text string //TODO this is to link to hosted ui
-		if host == "" {
-			text = "🎵 Now playing..."
-		} else {
-			text = fmt.Sprintf("🎵 <%s|Now playing...>", host)
-		}
 		slackMsg = &slack.Msg{
-			Text:        text,
+			Text:        "🎵 Now playing...",
 			Attachments: attachments,
 		}
 	}
@@ -49,10 +43,12 @@ func RecentlyPlayedMessage() ([]byte, error) {
 	if spotifyClient.Client == nil {
 		return ErrorMessage("Please ask an Admin to log in to Spotify")
 	}
-	songs, err := spotifyClient.RecentlyPlayed()
+
+	songs, err := spotifyClient.RecentlyPlayed(songHistoryLength)
 	if err != nil {
 		return nil, err
 	}
+
 	attachments := make([]slack.Attachment, 0)
 	for _, song := range songs {
 		attachment := slack.Attachment{
@@ -64,16 +60,12 @@ func RecentlyPlayedMessage() ([]byte, error) {
 		}
 		attachments = append(attachments, attachment)
 	}
-	var text string //TODO this is to link to hosted ui
-	if host == "" {
-		text = "🎵 Recently Played Songs"
-	} else {
-		text = fmt.Sprintf("🎵 <%s|Recently Played Songs>", host)
-	}
+
 	slackMsg := &slack.Msg{
-		Text:        text,
+		Text:        "🎵 Recently Played Songs",
 		Attachments: attachments,
 	}
+
 	return toJsonBody(slackMsg)
 }
 
@@ -94,7 +86,6 @@ func toJsonBody(slackMsg *slack.Msg) ([]byte, error) {
 }
 
 func SendLoginMessage(url string) {
-	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
 		Attachments: []slack.Attachment{
 			{
@@ -103,18 +94,17 @@ func SendLoginMessage(url string) {
 			},
 		},
 	}
-	err := slack.PostWebhook(webhook, slackMsg)
+	err := slack.PostWebhook(slackAdminWebhook, slackMsg)
 	if err != nil {
 		log.Printf("error posting to webhook: %s", err)
 	}
 }
 
 func SendLoginSuccessMessage(user *spotify.PrivateUser) {
-	webhook := getEnv("SLACK_ADMIN_WEBHOOK", "")
 	slackMsg := &slack.WebhookMessage{
 		Text: fmt.Sprintf("Logged in as %s", user.DisplayName),
 	}
-	err := slack.PostWebhook(webhook, slackMsg)
+	err := slack.PostWebhook(slackAdminWebhook, slackMsg)
 	if err != nil {
 		log.Printf("error posting to webhook: %s", err)
 	}

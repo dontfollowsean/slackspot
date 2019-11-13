@@ -8,8 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -22,32 +22,23 @@ const (
 var (
 	spotifyClient      *SpotifyClient
 	slackSigningSecret string
-	redirectURI        string
-	songHistoryLength  int
 	contactUser        string
-	host               string
+	slackAdminWebhook  string
+	songHistoryLength  int
 )
 
-func init() {
-	slackSigningSecret = getEnv("SLACK_SIGNING_SECRET", "")
-	host = getEnv("SLACKSPOT_HOST", "")
-	redirectURI = fmt.Sprintf("%s/callback", host)
-	var err error
-	songHistoryLength, err = strconv.Atoi(getEnv("SONG_HISTORY_LENGTH", "3"))
-	if err != nil {
-		songHistoryLength = 3
-	}
+func run(config *Config) error {
 	spotifyClient = &SpotifyClient{
 		Client:        nil,
-		Authenticator: spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadRecentlyPlayed),
-		State:         "bx",
+		Authenticator: spotify.NewAuthenticator(config.SpotifyRedirectURI, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadRecentlyPlayed),
+		State:         RandomString(16),
 		Channel:       make(chan *spotify.Client),
 	}
-	contactUser = getEnv("CONTACT_SLACK_USER", "an Administrator")
-}
+	slackSigningSecret = config.SlackSigingSecret
+	slackAdminWebhook = config.SlackAdminWebhook
+	songHistoryLength = config.SongHistoryLength
+	contactUser = config.ContactUser
 
-func main() {
-	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/nowplaying", nowPlayingHandler)
@@ -67,8 +58,10 @@ func main() {
 	log.Print("Listening on port 80")
 	err := http.ListenAndServe(":80", nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Print("ListenAndServe: ", err)
+		return err
 	}
+	return nil
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +124,9 @@ func nowPlayingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set(contentType, jsonType)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	nowPlaying, _ := spotifyClient.NowPlaying()
+
 	var b []byte
 	var err error
 	if nowPlaying != nil {
@@ -154,7 +149,22 @@ func recentlyPlayedHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set(contentType, jsonType)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	recentlyPlayed, _ := spotifyClient.RecentlyPlayed()
+
+	lengthParam := r.URL.Query().Get("length")
+
+	var size int
+	if lengthParam == "" {
+		size = songHistoryLength
+	} else {
+		s, err := strconv.Atoi(lengthParam)
+		if err != nil {
+			size = songHistoryLength
+		} else {
+			size = s
+		}
+	}
+
+	recentlyPlayed, _ := spotifyClient.RecentlyPlayed(size)
 	b, err := json.Marshal(recentlyPlayed)
 	_, _ = w.Write(b)
 	if err != nil {
@@ -180,9 +190,11 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	SendLoginSuccessMessage(user)
 }
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+func RandomString(length int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
-	return fallback
+	return string(b)
 }
