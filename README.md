@@ -19,7 +19,7 @@ Slackspot is a slack integration that allows users of a slack workspace to inter
 ### Start server:
 1. Clone repo
 2. `cd path/to/slackspot`
-3. `dep ensure`
+3. `go mod tidy`
 4. `docker-compose up`
 
 ---
